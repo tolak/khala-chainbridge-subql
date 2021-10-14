@@ -7,6 +7,12 @@ import type { AccountId, Balance, BlockNumber, H256, MultiAddress, Permill } fro
 /** @name Address */
 export interface Address extends MultiAddress {}
 
+/** @name AssetInfo */
+export interface AssetInfo extends Struct {
+  readonly destId: BridgeChainId;
+  readonly assetIdentity: Bytes;
+}
+
 /** @name Attestation */
 export interface Attestation extends Enum {
   readonly isSgxIas: boolean;
@@ -64,9 +70,9 @@ export interface EcdhPublicKey extends U8aFixed {}
 
 /** @name FungibleTransfer */
 export interface FungibleTransfer extends Struct {
-  readonly dest_id: BridgeChainId;
+  readonly destId: BridgeChainId;
   readonly nonce: DepositNonce;
-  readonly resource_id: ResourceId;
+  readonly resourceId: ResourceId;
   readonly amount: U256;
   readonly recipient: Bytes;
 }
@@ -94,9 +100,9 @@ export interface GatekeeperLaunch extends Enum {
 
 /** @name GenericTransfer */
 export interface GenericTransfer extends Struct {
-  readonly dest_id: BridgeChainId;
+  readonly destId: BridgeChainId;
   readonly nonce: DepositNonce;
-  readonly resource_id: ResourceId;
+  readonly resourceId: ResourceId;
   readonly metadata: Bytes;
 }
 
@@ -176,10 +182,10 @@ export interface NewGatekeeperEvent extends Struct {
 
 /** @name NonFungibleTransfer */
 export interface NonFungibleTransfer extends Struct {
-  readonly dest_id: BridgeChainId;
+  readonly destId: BridgeChainId;
   readonly nonce: DepositNonce;
-  readonly resource_id: ResourceId;
-  readonly token_id: Bytes;
+  readonly resourceId: ResourceId;
+  readonly tokenId: Bytes;
   readonly recipient: Bytes;
   readonly metadata: Bytes;
 }
@@ -212,8 +218,8 @@ export interface ProposalStatus extends Enum {
 
 /** @name ProposalVotes */
 export interface ProposalVotes extends Struct {
-  readonly votes_for: Vec<AccountId>;
-  readonly votes_against: Vec<AccountId>;
+  readonly votesFor: Vec<AccountId>;
+  readonly votesAgainst: Vec<AccountId>;
   readonly status: ProposalStatus;
   readonly expiry: BlockNumber;
 }
