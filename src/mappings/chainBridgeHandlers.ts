@@ -16,6 +16,7 @@ export async function handleFungibleTransferEvent(ctx: SubstrateEvent): Promise<
 
     if (undefined === (await ChainBridgeFungibleTransferEvent.get(id))) {
         const record = new ChainBridgeFungibleTransferEvent(id)
+        record.blockHeight = ctx.block.block.header.number.toBigInt()
         record.amount = amount.toString()
         record.depositNonce = depositNonce
         record.destinationChainId = chainId
