@@ -3,7 +3,7 @@ description: ''
 repository: https://github.com/jasl/khala-chainbridge-subql.git
 schema: ./schema.graphql
 network:
-  endpoint: wss://khala-archive.phala.network/ws
+  endpoint: wss://khala.api.onfinality.io/public-ws
   types:
     Address: MultiAddress
     LookupSource: MultiAddress
