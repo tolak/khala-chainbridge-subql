@@ -3,7 +3,7 @@ description: ''
 repository: https://github.com/jasl/khala-chainbridge-subql.git
 schema: ./schema.graphql
 network:
-  endpoint: wss://khala.api.onfinality.io/public-ws
+  endpoint: ws://127.0.0.1:9944
   types:
     Address: MultiAddress
     LookupSource: MultiAddress
@@ -224,4 +224,9 @@ dataSources:
           filter:
             module: chainBridge
             method: ProposalSucceeded
+        - handler: handleTreasuryDeposit
+          kind: substrate/EventHandler
+          filter:
+            module: treasury
+            method: Deposit
 

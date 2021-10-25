@@ -1,6 +1,10 @@
-type SpecVersion @entity {
-    id: ID! #specVersion
-    blockHeight: BigInt!
+type Block @entity {
+    # block hash
+    id: ID!
+    # parent block hash
+    parent: ID!
+    blockHeight: BigInt! @index
+    timestamp: Date!
 }
 
 type Event @entity {
@@ -51,4 +55,11 @@ type ChainBridgeProposalExecution @entity {
     originChainId: Int! @index
 
     signer: String!
+}
+
+type Revenue @entity {
+    id: ID!
+
+    blockHeight: BigInt! @index
+    amount: BigInt!
 }
