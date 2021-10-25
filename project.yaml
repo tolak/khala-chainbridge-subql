@@ -1,6 +1,6 @@
 specVersion: 0.0.1
 description: ''
-repository: https://github.com/tolak/khala-chainbridge-subql.git
+repository: https://github.com/Phala-Network/khala-chainbridge-subql.git
 schema: ./schema.graphql
 network:
   endpoint: wss://khala.api.onfinality.io/public-ws
