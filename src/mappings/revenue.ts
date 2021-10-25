@@ -9,6 +9,7 @@ export async function handleTreasuryDeposit(event: SubstrateEvent): Promise<void
     if (revenue === undefined) {
         revenue = new Revenue(`treasury-${blockHeight.toString()}`)
         revenue.blockHeight = blockHeight
+        revenue.amount = BigInt(0)
     }
     if (revenue.blockHeight !== blockHeight) throw new Error('Block number dismatch, qed.')
 
@@ -16,7 +17,7 @@ export async function handleTreasuryDeposit(event: SubstrateEvent): Promise<void
         const {
             data: [encodedAmount],
         } = event.event as unknown as IEvent<[U128]>
-        revenue.amount += encodedAmount.toBigInt()
+        revenue.amount = revenue.amount + encodedAmount.toBigInt()
     }
 
     await revenue.save()
