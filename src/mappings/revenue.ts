@@ -8,8 +8,14 @@ export async function handleTreasuryDeposit(event: SubstrateEvent): Promise<void
     let revenue = await Revenue.get(`treasury-${blockHeight.toString()}`)
     if (revenue === undefined) {
         revenue = new Revenue(`treasury-${blockHeight.toString()}`)
+        let preRevenue = await Revenue.get(`treasury-${(blockHeight - BigInt(1)).toString()}`)
+        if (preRevenue !== undefined) {
+            revenue.amount = preRevenue.amount
+        } else {
+            // startBlock
+            revenue.amount = BigInt(0)
+        }
         revenue.blockHeight = blockHeight
-        revenue.amount = BigInt(0)
     }
     if (revenue.blockHeight !== blockHeight) throw new Error('Block number dismatch, qed.')
 
