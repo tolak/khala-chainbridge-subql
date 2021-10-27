@@ -1,7 +1,13 @@
 import { SubstrateBlock, SubstrateEvent, SubstrateExtrinsic } from '@subql/types'
-import { Event, Extrinsic, SpecVersion } from '../types'
+import { Block, Event, Extrinsic, SpecVersion } from '../types'
 
 export async function handleBlock(block: SubstrateBlock): Promise<void> {
+    const blockRecord = new Block(block.block.header.hash.toString())
+    blockRecord.blockHeight = block.block.header.number.toBigInt()
+    blockRecord.parent = block.block.header.parentHash.toString()
+    blockRecord.timestamp = block.timestamp
+    await blockRecord.save()
+
     const specVersion = await SpecVersion.get(block.specVersion.toString())
     if (specVersion === undefined) {
         const newSpecVersion = new SpecVersion(block.specVersion.toString())

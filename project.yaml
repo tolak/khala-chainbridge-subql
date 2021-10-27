@@ -1,6 +1,6 @@
 specVersion: 0.0.1
 description: ''
-repository: https://github.com/jasl/khala-chainbridge-subql.git
+repository: https://github.com/Phala-Network/khala-chainbridge-subql.git
 schema: ./schema.graphql
 network:
   endpoint: wss://khala.api.onfinality.io/public-ws
@@ -224,4 +224,5 @@ dataSources:
           filter:
             module: chainBridge
             method: ProposalSucceeded
-
+        - handler: handleTreasuryDeposit
+          kind: substrate/EventHandler
