@@ -1,3 +1,8 @@
+type SpecVersion @entity {
+    id: ID! #specVersion
+    blockHeight: BigInt!
+}
+
 type Block @entity {
     # block hash
     id: ID!
