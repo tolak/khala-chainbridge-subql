@@ -17,6 +17,7 @@ export async function handleFungibleTransferEvent(ctx: SubstrateEvent): Promise<
     if (undefined === (await ChainBridgeFungibleTransferEvent.get(id))) {
         const record = new ChainBridgeFungibleTransferEvent(id)
         record.blockHeight = ctx.block.block.header.number.toBigInt()
+        record.timestamp = ctx.block.timestamp
         record.amount = amount.toString()
         record.depositNonce = depositNonce
         record.destinationChainId = chainId
@@ -40,6 +41,7 @@ export async function handleProposalApprovedEvent(ctx: SubstrateEvent): Promise<
     let record = await ChainBridgeProposalApproval.get(id)
     if (record === undefined) {
         record = new ChainBridgeProposalApproval(id)
+        record.timestamp = ctx.block.timestamp
         record.depositNonce = depositNonce
         record.originChainId = originChainId
     }
@@ -62,6 +64,7 @@ export async function handleProposalSucceededEvent(ctx: SubstrateEvent): Promise
     let record = await ChainBridgeProposalExecution.get(id)
     if (record === undefined) {
         record = new ChainBridgeProposalExecution(id)
+        record.timestamp = ctx.block.timestamp
         record.depositNonce = depositNonce
         record.originChainId = originChainId
     }

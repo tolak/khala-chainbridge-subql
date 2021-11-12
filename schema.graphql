@@ -8,6 +8,7 @@ type Event @entity {
     blockHeight: BigInt! @index
     event: String! @index
     module: String! @index
+    timestamp: Date!
 }
 
 type Extrinsic @entity {
@@ -17,12 +18,14 @@ type Extrinsic @entity {
     isSigned: Boolean!
     module: String! @index
     success: Boolean!
+    timestamp: Date!
 }
 
 # FungibleTransfer(ChainId, DepositNonce, ResourceId, U256, Vec<u8>)
 type ChainBridgeFungibleTransferEvent @entity {
     id: ID!
     blockHeight: BigInt! @index
+    timestamp: Date!
 
     amount: String!
     depositNonce: BigInt! @index
@@ -35,6 +38,7 @@ type ChainBridgeFungibleTransferEvent @entity {
 
 type ChainBridgeProposalApproval @entity {
     id: ID!
+    timestamp: Date!
 
     depositNonce: BigInt! @index
     originChainId: Int! @index
@@ -46,6 +50,7 @@ type ChainBridgeProposalApproval @entity {
 
 type ChainBridgeProposalExecution @entity {
     id: ID!
+    timestamp: Date!
 
     depositNonce: BigInt! @index
     originChainId: Int! @index
