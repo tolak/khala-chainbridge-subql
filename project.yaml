@@ -226,3 +226,5 @@ dataSources:
             method: ProposalSucceeded
         - handler: handleTreasuryDeposit
           kind: substrate/EventHandler
+        - handler: handleMinerSettled
+          kind: substrate/EventHandler

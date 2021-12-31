@@ -71,5 +71,6 @@ type Revenue @entity {
     id: ID!
 
     blockHeight: BigInt! @index
-    amount: BigInt!
+    treasury: BigInt
+    mining: BigInt
 }
