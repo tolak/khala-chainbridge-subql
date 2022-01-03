@@ -67,9 +67,27 @@ type ChainBridgeProposalExecution @entity {
     signer: String!
 }
 
-type Revenue @entity {
+type Treasury @entity {
     id: ID!
 
     blockHeight: BigInt! @index
+    # total treasury income
     amount: BigInt!
+}
+
+type Mining @entity {
+    id: ID!
+
+    blockHeight: BigInt! @index
+    # total distributed mining rewards
+    amount: BigInt!
+}
+
+type Circulation @entity {
+    id: ID!
+    blockHeight: BigInt! @index
+    # circulation on khala network
+    khala: BigInt!
+    # circulation on khala network and others
+    total: BigInt!
 }
