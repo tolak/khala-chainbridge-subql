@@ -31,9 +31,9 @@ export async function handleMinerSettled(event: SubstrateEvent): Promise<void> {
         } = event.event as unknown as IEvent<[U128]>
         let a = new BN(encodedPayout.toString()).and(bnh64bits).shrn(64)
         let b = new BN(encodedPayout.toString()).and(bnl64bits)
-        let strPayout = ((new Decimal(a.toString() + '.' + b.toString())).mul(new Decimal('1000000000000'))).toString()
+        let strPayout = ((new Decimal(a.toString() + '.' + b.toString())).mul(new Decimal('1000000000000'))).toFixed(0)
         mining.amount = mining.amount + BigInt(strPayout)
-        logger.info(`Got new mining payout: ${strPayout}, total payout: ${mining.amount.toString()}`)
+        logger.trace(`Got new mining payout: ${strPayout}, total payout: ${mining.amount.toString()}`)
     }
 
     await mining.save()

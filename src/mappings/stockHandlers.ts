@@ -28,7 +28,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
         circulation.total = totalSupply - miningSubsidy
         circulation.blockHeight = blockRecord.blockHeight
         await circulation.save()
-        logger.info(`Save circulation [khala: ${circulation.khala.toString()}, total: ${circulation.total.toString()}] at block ${blockRecord.blockHeight.toString()}`)
+        logger.trace(`Save circulation [khala: ${circulation.khala.toString()}, total: ${circulation.total.toString()}] at block ${blockRecord.blockHeight.toString()}`)
     }
 }
 
