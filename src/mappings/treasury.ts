@@ -25,7 +25,7 @@ export async function handleTreasuryDeposit(event: SubstrateEvent): Promise<void
             data: [encodedAmount],
         } = event.event as unknown as IEvent<[U128]>
         treasury.amount = treasury.amount + encodedAmount.toBigInt()
-        logger.info(`Got new treasury income: ${encodedAmount.toBigInt().toString()}, total income: ${treasury.amount.toString()}`)
+        logger.trace(`Got new treasury income: ${encodedAmount.toBigInt().toString()}, total income: ${treasury.amount.toString()}`)
     }
 
     await treasury.save()
