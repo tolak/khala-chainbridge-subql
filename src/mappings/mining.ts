@@ -5,8 +5,8 @@ import { U128 } from '@polkadot/types'
 import BN from 'bn.js'
 import { Decimal } from 'decimal.js'
 
-const bnh64bits = new BN('FFFFFFFFFFFFFFFF0000000000000000', 16);
-const bnl64bits = new BN('FFFFFFFFFFFFFFFF', 16);
+const BASE = new Decimal(2).pow(64);
+const MUL = new Decimal(10).pow(12);
 
 // collect total minner rewards
 export async function handleMinerSettled(event: SubstrateEvent): Promise<void> {
@@ -29,11 +29,9 @@ export async function handleMinerSettled(event: SubstrateEvent): Promise<void> {
         const {
             data: [_mainer, _encodedV, encodedPayout],
         } = event.event as unknown as IEvent<[U128]>
-        let a = new BN(encodedPayout.toString()).and(bnh64bits).shrn(64)
-        let b = new BN(encodedPayout.toString()).and(bnl64bits)
-        let strPayout = ((new Decimal(a.toString() + '.' + b.toString())).mul(new Decimal('1000000000000'))).toFixed(0)
-        mining.amount = mining.amount + BigInt(strPayout)
-        logger.trace(`Got new mining payout: ${strPayout}, total payout: ${mining.amount.toString()}`)
+        let dec = new Decimal(encodedPayout.toString()).div(BASE).mul(MUL)
+        mining.amount = mining.amount + BigInt(dec.toFixed(0))
+        logger.trace(`Got new mining payout: ${dec.toString()}, total payout: ${mining.amount.toString()}`)
     }
 
     await mining.save()
