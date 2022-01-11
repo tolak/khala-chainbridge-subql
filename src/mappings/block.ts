@@ -16,7 +16,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
 
     // Circulation computing, updated every 100 blocks
     let circulation = await Circulation.get(`circulation-${lastUpdatedBlock.toString()}`)
-    if (circulation === undefined || (blockHeight - lastUpdatedBlock) === BigInt(100)) {
+    if (circulation === undefined || (blockHeight - lastUpdatedBlock) === BigInt(300)) {
         try {
             // query onchain storage
             await api.queryMulti([
