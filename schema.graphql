@@ -3,68 +3,46 @@ type SpecVersion @entity {
     blockHeight: BigInt!
 }
 
-type Block @entity {
-    # block hash
+type Tx @entity {
     id: ID!
-    # parent block hash
-    parent: ID!
-    blockHeight: BigInt! @index
-    timestamp: Date!
+    hash: String!
+    sender: String!
 }
 
-type Event @entity {
+type BridgeOutboundingRecord @entity {
     id: ID!
-    blockHeight: BigInt! @index
-    event: String! @index
-    module: String! @index
-    timestamp: Date!
-}
+    createdAt: Date!
 
-type Extrinsic @entity {
-    id: ID!
-    blockHeight: BigInt! @index
-    call: String! @index
-    isSigned: Boolean!
-    module: String! @index
-    success: Boolean!
-    timestamp: Date!
-}
-
-# FungibleTransfer(ChainId, DepositNonce, ResourceId, U256, Vec<u8>)
-type ChainBridgeFungibleTransferEvent @entity {
-    id: ID!
-    blockHeight: BigInt! @index
-    timestamp: Date!
-
-    amount: String!
+    # destChainId and depositNonce can be used to track
+    # crosschain transfer status on dest chain
+    destChainId: Int! @index
     depositNonce: BigInt! @index
-    destinationChainId: Int! @index
-    executedAt: String!
-    recipient: String!
-    resourceId: String!
-    signer: String
+
+    resourceId: String! @index
+    amount: BigInt
+    recipient: String @index
+
+    sendTx: String
+
+    # Sender can be used to construct user transaction history
+    sender: String @index
 }
 
-type ChainBridgeProposalApproval @entity {
+type BridgeInboundingRecord @entity {
     id: ID!
-    timestamp: Date!
+    createdAt: Date!
 
-    depositNonce: BigInt! @index
+    # Origin chain can use destChainId and depositNonce to track
+    # crosschain transfer status on this chain
     originChainId: Int! @index
-
-    approvalBlockHeight: BigInt!
-    approvalExtrinsic: String!
-    signer: String!
-}
-
-type ChainBridgeProposalExecution @entity {
-    id: ID!
-    timestamp: Date!
-
     depositNonce: BigInt! @index
-    originChainId: Int! @index
 
-    signer: String!
+    resourceId: String! @index
+    # Proposal status being updated when vote happened
+    status: String!
+
+    voteTxs: [String!]!
+    executeTx: String
 }
 
 type Treasury @entity {

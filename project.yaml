@@ -205,15 +205,16 @@ dataSources:
       handlers:
         - handler: handleBlock
           kind: substrate/BlockHandler
-        - handler: handleEvent
-          kind: substrate/EventHandler
-        - handler: handleCall
-          kind: substrate/CallHandler
         - handler: handleFungibleTransferEvent
           kind: substrate/EventHandler
           filter:
             module: chainBridge
             method: FungibleTransfer
+        - handler: handleProposalVoteForEvent
+          kind: substrate/EventHandler
+          filter:
+            module: chainBridge
+            method: VoteFor
         - handler: handleProposalApprovedEvent
           kind: substrate/EventHandler
           filter:
@@ -224,6 +225,16 @@ dataSources:
           filter:
             module: chainBridge
             method: ProposalSucceeded
+        - handler: handleProposalRejectedEvent
+          kind: substrate/EventHandler
+          filter:
+            module: chainBridge
+            method: ProposalRejected
+        - handler: handleProposalFailedEvent
+          kind: substrate/EventHandler
+          filter:
+            module: chainBridge
+            method: ProposalFailed
         - handler: handleTreasuryDeposit
           kind: substrate/EventHandler
         - handler: handleMinerSettled
