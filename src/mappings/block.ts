@@ -26,8 +26,7 @@ export async function handleBlock(block: SubstrateBlock): Promise<void> {
                 let bridgeReserved = ((b_bridgeReserved as AccountInfo).data.free as Balance).toBigInt()
                 let miningSubsidy = ((b_miningSubsidy as AccountInfo).data.free as Balance).toBigInt()
 
-                let circulation = await Circulation.get(`circulation-${blockHeight.toString()}`)
-                circulation = new Circulation(`circulation-${blockHeight.toString()}`)
+                let circulation = new Circulation(`circulation-${blockHeight.toString()}`)
                 circulation.khala = totalSupply - bridgeReserved - miningSubsidy
                 circulation.total = totalSupply - miningSubsidy
                 circulation.blockHeight = blockHeight
