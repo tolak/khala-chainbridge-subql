@@ -1,5 +1,5 @@
 //Exports all handler functions
-export * from './mappings/chainBridgeHandlers'
-export * from './mappings/stockHandlers'
+export * from './mappings/block'
 export * from './mappings/treasury'
 export * from './mappings/mining'
+export * from './mappings/xtransfer'
