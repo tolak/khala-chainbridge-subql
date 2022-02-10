@@ -5,6 +5,8 @@ import { AccountId } from "@polkadot/types/interfaces";
 import { BridgeChainId, DepositNonce, ResourceId } from '../interfaces'
 import { BridgeOutboundingRecord, BridgeInboundingRecord, Tx } from '../types'
 
+const ROUTER = '3zcnkmF6XjEogm8vAyPiL2ykPZHpeVtcfDcwTWJ2teqdSvjq'
+
 export async function handleFungibleTransferEvent(ctx: SubstrateEvent): Promise<void> {
     const {
         data: [chainIdCodec, depositNonceCodec, resourceId, amount, recipient],
@@ -24,6 +26,11 @@ export async function handleFungibleTransferEvent(ctx: SubstrateEvent): Promise<
         record.amount = amount.toBigInt()
         record.recipient = recipient.toHex()
         record.sender = ctx.extrinsic?.extrinsic.signer.toString()
+
+        if (record.sender === ROUTER)
+            record.isX3 = true
+        else
+            record.isX3 = false
 
         let txId = ctx.extrinsic?.extrinsic.hash.toHex()
         let sendTx = new Tx(txId)
