@@ -23,7 +23,7 @@ export async function handleFungibleTransferEvent(ctx: SubstrateEvent): Promise<
         record.resourceId = resourceId.toHex()
         record.amount = amount.toBigInt()
         record.recipient = recipient.toHex()
-        record.sender = ctx.extrinsic?.extrinsic.signer.toString()
+        record.sender = ctx.extrinsic?.extrinsic.isSigned ? ctx.extrinsic?.extrinsic.signer.toString() : undefined
 
         let txId = ctx.extrinsic?.extrinsic.hash.toHex()
         let sendTx = new Tx(txId)
