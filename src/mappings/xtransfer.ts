@@ -1,148 +1,79 @@
-import { Bytes, U256 } from '@polkadot/types'
+import { U256 } from '@polkadot/types'
 import { IEvent } from '@polkadot/types/types'
 import { SubstrateEvent } from '@subql/types'
-import { AccountId } from "@polkadot/types/interfaces";
-import { BridgeChainId, DepositNonce, ResourceId } from '../interfaces'
-import { BridgeOutboundingRecord, BridgeInboundingRecord, Tx } from '../types'
+import { AccountId, MultiLocation } from "@polkadot/types/interfaces"
+import { CurrencyId } from "@acala-network/types/interfaces"
+import { CurrencyDeposit, XTokenSent } from '../types'
 
-export async function handleFungibleTransferEvent(ctx: SubstrateEvent): Promise<void> {
+export async function handleXTokenTransferredEvent(ctx: SubstrateEvent): Promise<void> {
     const {
-        data: [chainIdCodec, depositNonceCodec, resourceId, amount, recipient],
-    } = ctx.event as unknown as IEvent<[BridgeChainId, DepositNonce, ResourceId, U256, Bytes]>
+        data: [sender, currencyId, amount, dest],
+    } = ctx.event as unknown as IEvent<[AccountId, CurrencyId, U256, MultiLocation]>
 
-    const chainId = chainIdCodec.toNumber()
-    const depositNonce = depositNonceCodec.toBigInt()
+    const blockHeight = ctx.block.block.header.number.toBigInt()
+    const txId = ctx.extrinsic?.idx
+    const id = `${blockHeight}-${txId}-${amount}`
 
-    const id = `${chainId}-${depositNonce}`
-
-    if (undefined === (await BridgeOutboundingRecord.get(id))) {
-        const record = new BridgeOutboundingRecord(id)
+    if (undefined === (await XTokenSent.get(id))) {
+        const record = new XTokenSent(id)
         record.createdAt = ctx.block.timestamp
-        record.destChainId = chainId
-        record.depositNonce = depositNonce
-        record.resourceId = resourceId.toHex()
+        record.currencyId = currencyId.toString()
         record.amount = amount.toBigInt()
-        record.recipient = recipient.toHex()
-        record.sender = ctx.extrinsic?.extrinsic.signer.toString()
+        record.sender = sender.toString()
+        record.hash = ctx.extrinsic?.extrinsic.hash.toHex()
 
-        let txId = ctx.extrinsic?.extrinsic.hash.toHex()
-        let sendTx = new Tx(txId)
-        sendTx.hash = ctx.extrinsic?.extrinsic.hash.toHex()
-        sendTx.sender = ctx.extrinsic?.extrinsic.signer.toString()
-        await sendTx.save()
+        // Decode from MultiLocatioin
+        if (
+            dest.interior.isX4
+            && dest.interior.asX4[0].isParachain
+            && dest.interior.asX4[0].asParachain.unwrap().toString() === '2004'
+            && dest.interior.asX4[1].isGeneralKey
+            && dest.interior.asX4[1].asGeneralKey.toString() === '0x6362'   // characters: 'cb'
+            && dest.interior.asX4[2].isGeneralIndex
+            && dest.interior.asX4[3].isGeneralKey
+        ) {
+            record.isX3 = true
+            record.destChain = dest.interior.asX4[2].asGeneralIndex.unwrap().toBigInt()
+            // Solo chain account
+            record.recipient = dest.interior.asX4[3].asGeneralKey.toString()
+        } else if (
+            dest.interior.isX2
+            && dest.interior.asX2[0].isParachain
+            && dest.interior.asX2[0].asParachain.unwrap().toString() === '2004'
+            && dest.interior.asX2[1].isAccountId32
+        ) {
+            record.isX3 = false
+            record.destChain = undefined
+            // Substrate account
+            record.recipient = dest.interior.asX2[1].asAccountId32.toString()
+        } else {
+            // Unrecognised format
+            return;
+        }
 
-        record.sendTx = txId
         await record.save()
-        logger.debug(`Created new outbounding record: ${record}`)
+        logger.trace(`Created new XTokenSent record: ${record}`)
     }
 }
 
-export async function handleProposalVoteForEvent(ctx: SubstrateEvent): Promise<void> {
+export async function handleCurrencyDepositedEvent(ctx: SubstrateEvent): Promise<void> {
     const {
-        data: [chainIdCodec, depositNonceCodec, _voter],
-    } = ctx.event as unknown as IEvent<[BridgeChainId, DepositNonce, AccountId]>
+        data: [currencyId, recipient, amount],
+    } = ctx.event as unknown as IEvent<[CurrencyId, AccountId, U256]>
 
-    const originChainId = chainIdCodec.toNumber()
-    const depositNonce = depositNonceCodec.toBigInt()
+    const blockHeight = ctx.block.block.header.number.toBigInt()
+    const txId = ctx.extrinsic?.idx
+    const id = `${blockHeight}-${txId}-${amount}`
 
-    const id = `${originChainId}-${depositNonce}`
-    let record = await BridgeInboundingRecord.get(id)
+    let record = await CurrencyDeposit.get(id)
     if (record === undefined) {
-        record = new BridgeInboundingRecord(id)
+        record = new CurrencyDeposit(id)
         record.createdAt = ctx.block.timestamp
-        record.originChainId = originChainId
-        record.depositNonce = depositNonce
-        record.resourceId = ctx.extrinsic?.extrinsic.args[2].toHex()
-        record.status = 'Initiated'
-        record.voteTxs = []
-        logger.debug(`Created new inbounding record: ${record}`)
-    }
+        record.currencyId = currencyId.toString()
+        record.recipient = recipient.toString()
+        record.amount = amount.toBigInt()
 
-    let txId = ctx.extrinsic.extrinsic.hash.toHex()
-    let voteTx = new Tx(txId)
-    voteTx.hash = ctx.extrinsic.extrinsic.hash.toHex()
-    voteTx.sender = ctx.extrinsic?.extrinsic.signer.toString()
-    await voteTx.save()
-
-    let votes = record.voteTxs
-    votes.push(txId)
-    record.voteTxs = votes
-    await record.save()
-    logger.debug(`Add new vote into inbounding record: ${record}`)
-}
-
-export async function handleProposalApprovedEvent(ctx: SubstrateEvent): Promise<void> {
-    const {
-        data: [chainIdCodec, depositNonceCodec],
-    } = ctx.event as unknown as IEvent<[BridgeChainId, DepositNonce]>
-
-    const originChainId = chainIdCodec.toNumber()
-    const depositNonce = depositNonceCodec.toBigInt()
-
-    const id = `${originChainId}-${depositNonce}`
-    let record = await BridgeInboundingRecord.get(id)
-    if (record !== undefined) {
-        record.status = 'Approved'
         await record.save()
-        logger.debug(`Inbounding record approved: ${id}`)
-    }
-}
-
-export async function handleProposalSucceededEvent(ctx: SubstrateEvent): Promise<void> {
-    const {
-        data: [chainIdCodec, depositNonceCodec],
-    } = ctx.event as unknown as IEvent<[BridgeChainId, DepositNonce]>
-
-    const originChainId = chainIdCodec.toNumber()
-    const depositNonce = depositNonceCodec.toBigInt()
-
-    const id = `${originChainId}-${depositNonce}`
-    let record = await BridgeInboundingRecord.get(id)
-    if (record !== undefined) {
-        record.status = 'Succeeded'
-
-        let txId = ctx.extrinsic?.extrinsic.hash.toHex()
-        let executeTx = new Tx(txId)
-        executeTx.hash = ctx.extrinsic?.extrinsic.hash.toHex()
-        executeTx.sender = ctx.extrinsic?.extrinsic.signer.toString()
-        await executeTx.save()
-
-        record.executeTx = txId
-        await record.save()
-        logger.debug(`Inbounding record succeeded: ${id}, with execute tx: ${executeTx}`)
-    }
-}
-
-export async function handleProposalRejectedEvent(ctx: SubstrateEvent): Promise<void> {
-    const {
-        data: [chainIdCodec, depositNonceCodec],
-    } = ctx.event as unknown as IEvent<[BridgeChainId, DepositNonce]>
-
-    const originChainId = chainIdCodec.toNumber()
-    const depositNonce = depositNonceCodec.toBigInt()
-
-    const id = `${originChainId}-${depositNonce}`
-    let record = await BridgeInboundingRecord.get(id)
-    if (record !== undefined) {
-        record.status = 'Rejected'
-        await record.save()
-        logger.debug(`Inbounding record rejected: ${id}`)
-    }
-}
-
-export async function handleProposalFailedEvent(ctx: SubstrateEvent): Promise<void> {
-    const {
-        data: [chainIdCodec, depositNonceCodec],
-    } = ctx.event as unknown as IEvent<[BridgeChainId, DepositNonce]>
-
-    const originChainId = chainIdCodec.toNumber()
-    const depositNonce = depositNonceCodec.toBigInt()
-
-    const id = `${originChainId}-${depositNonce}`
-    let record = await BridgeInboundingRecord.get(id)
-    if (record !== undefined) {
-        record.status = 'Failed'
-        await record.save()
-        logger.debug(`Inbounding record failed: ${id}`)
+        logger.trace(`Created new CurrencyDeposit record: ${record}`)
     }
 }
