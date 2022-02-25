@@ -1,9 +1,10 @@
-import { Bytes, U256 } from '@polkadot/types'
+import { encodeAddress } from '@polkadot/util-crypto'
+import { Bytes, decorateStorage, U256 } from '@polkadot/types'
 import { IEvent } from '@polkadot/types/types'
 import { SubstrateEvent } from '@subql/types'
-import { AccountId } from "@polkadot/types/interfaces";
+import { AccountId, MultiAsset, MultiLocation } from "@polkadot/types/interfaces";
 import { BridgeChainId, DepositNonce, ResourceId } from '../interfaces'
-import { BridgeOutboundingRecord, BridgeInboundingRecord, Tx } from '../types'
+import { BridgeOutboundingRecord, BridgeInboundingRecord, Tx, XcmTransfered, XcmDeposited, XcmWithdrawn } from '../types'
 
 export async function handleFungibleTransferEvent(ctx: SubstrateEvent): Promise<void> {
     const {
@@ -144,5 +145,101 @@ export async function handleProposalFailedEvent(ctx: SubstrateEvent): Promise<vo
         record.status = 'Failed'
         await record.save()
         logger.debug(`Inbounding record failed: ${id}`)
+    }
+}
+
+export async function handleXcmTransferedEvent(ctx: SubstrateEvent): Promise<void> {
+    const {
+        data: [asset, origin, dest],
+    } = ctx.event as unknown as IEvent<[MultiAsset, MultiLocation, MultiLocation]>
+
+    let hash = ctx.extrinsic?.extrinsic.hash.toHex()
+    let sender = origin.interior.asX1.asAccountId32.id.toString()
+    let recipient
+    if (dest.parents.eq(1) && dest.interior.isX1 && dest.interior.asX1.isAccountId32) { // to relaychain
+        recipient = encodeAddress(dest.interior.asX1.asAccountId32.id.toHex(), 42).toString()
+    } else if (dest.parents.eq(1) && dest.interior.isX2 && dest.interior.asX2[0].isParachain && dest.interior.asX2[1].isAccountId32) {  // to parachain
+        recipient = encodeAddress(dest.interior.asX2[1].asAccountId32.id.toHex(), 42).toString()
+    } else {
+        recipient = 'unknown'
+    }
+
+    const id = `${sender}-${hash}`
+    let record = await XcmTransfered.get(id)
+    if (record === undefined) {
+        const record = new XcmTransfered(id)
+        record.createdAt = ctx.block.timestamp
+        record.sender = sender
+        record.asset = asset.id.asConcrete.toString()
+        record.recipient = recipient
+        record.amount = asset.fungibility.asFungible.toBigInt()
+        await record.save()
+        logger.info(`===> Add new XcmTransfered record: ${record}`)
+    }
+}
+
+export async function handleXcmDepositedEvent(ctx: SubstrateEvent): Promise<void> {
+    const {
+        data: [what, who],
+    } = ctx.event as unknown as IEvent<[MultiAsset, MultiLocation]>
+
+    let hash = ctx.extrinsic?.extrinsic.hash.toHex()
+    let recipient
+    let isForward = false
+    if (who.parents.eq(0)) {
+        if (who.interior.isX1 && who.interior.asX1.isAccountId32) { // local account
+            recipient = encodeAddress(who.interior.asX1.asAccountId32.id.toHex(), 42).toString()
+        } else if (who.interior.isX3 && who.interior.asX3[2].isGeneralKey) {    // EVM account
+            recipient = who.interior.asX3[2].asGeneralKey.toHex()
+            isForward = true
+        }
+    } else {
+        recipient = 'unknown'
+    }
+
+    logger.info(`===> XcmDeposited:\n`)
+    logger.info(`asset: ${what.id.asConcrete.toString()}\n`)
+    logger.info(`recipient: ${recipient}\n`)
+    logger.info(`what: ${what}\n`)
+    logger.info(`amount: ${what.fungibility.asFungible.toBigInt()}\n`)
+
+    const id = `${recipient}-${hash}`
+    let record = await XcmDeposited.get(id)
+    if (record === undefined) {
+        const record = new XcmDeposited(id)
+        record.createdAt = ctx.block.timestamp
+        record.asset = what.id.asConcrete.toString()
+        record.recipient = recipient
+        record.amount = what.fungibility.asFungible.toBigInt()
+        record.isForward = isForward
+        await record.save()
+        logger.info(`===> Add new XcmDeposited record: ${record}`)
+    }
+}
+
+export async function handleXcmWithdrawnEvent(ctx: SubstrateEvent): Promise<void> {
+    const {
+        data: [what, who],
+    } = ctx.event as unknown as IEvent<[MultiAsset, MultiLocation]>
+
+    let hash = ctx.extrinsic?.extrinsic.hash.toHex()
+    let depositer
+    let isForward = false
+    if (who.parents.eq(0) && who.interior.isX1 && who.interior.asX1.isAccountId32) {
+        depositer = encodeAddress(who.interior.asX1.asAccountId32.id.toHex(), 42).toString()
+    } else {
+        depositer = 'unknown'
+    }
+
+    const id = `${depositer}-${hash}`
+    let record = await XcmWithdrawn.get(id)
+    if (record === undefined) {
+        const record = new XcmWithdrawn(id)
+        record.createdAt = ctx.block.timestamp
+        record.asset = what.id.asConcrete.toString()
+        record.depositer = depositer
+        record.amount = what.fungibility.asFungible.toBigInt()
+        await record.save()
+        logger.info(`===> Add new XcmWithdrawn record: ${record}`)
     }
 }

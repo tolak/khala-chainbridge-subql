@@ -235,6 +235,21 @@ dataSources:
           filter:
             module: chainBridge
             method: ProposalFailed
+        - handler: handleXcmTransferedEvent
+          kind: substrate/EventHandler
+          filter:
+            module: xcmTransfer
+            method: AssetTransfered
+        - handler: handleXcmDepositedEvent
+          kind: substrate/EventHandler
+          filter:
+            module: xcmTransfer
+            method: XcmDeposited
+        - handler: handleXcmWithdrawnEvent
+          kind: substrate/EventHandler
+          filter:
+            module: xcmTransfer
+            method: XcmWithdrawn
         - handler: handleTreasuryDeposit
           kind: substrate/EventHandler
         - handler: handleMinerSettled

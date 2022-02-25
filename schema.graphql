@@ -3,6 +3,35 @@ type SpecVersion @entity {
     blockHeight: BigInt!
 }
 
+type XcmTransfered @entity {
+    id: ID!
+    createdAt: Date!
+
+    asset: String! @index
+    sender: String! @index
+    recipient: String! @index
+    amount: BigInt
+}
+
+type XcmDeposited @entity {
+    id: ID!
+    createdAt: Date!
+
+    asset: String! @index
+    recipient: String! @index
+    amount: BigInt
+    isForward: Boolean
+}
+
+type XcmWithdrawn @entity {
+    id: ID!
+    createdAt: Date!
+
+    asset: String! @index
+    depositer: String! @index
+    amount: BigInt
+}
+
 type Tx @entity {
     id: ID!
     hash: String!
