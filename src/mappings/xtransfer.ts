@@ -198,10 +198,9 @@ export async function handleXcmDepositedEvent(ctx: SubstrateEvent): Promise<void
     }
 
     logger.info(`===> XcmDeposited:\n`)
-    logger.info(`asset: ${what.id.asConcrete.toString()}\n`)
-    logger.info(`recipient: ${recipient}\n`)
     logger.info(`what: ${what}\n`)
-    logger.info(`amount: ${what.fungibility.asFungible.toBigInt()}\n`)
+    //@ts-ignore
+    logger.info(`amount: ${what.fun.fungible}\n`)
 
     const id = `${recipient}-${hash}`
     let record = await XcmDeposited.get(id)
