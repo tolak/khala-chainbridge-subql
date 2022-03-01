@@ -2,7 +2,9 @@ import { encodeAddress } from '@polkadot/util-crypto'
 import { Bytes, decorateStorage, U256 } from '@polkadot/types'
 import { IEvent } from '@polkadot/types/types'
 import { SubstrateEvent } from '@subql/types'
-import { AccountId, MultiAsset, MultiLocation } from "@polkadot/types/interfaces";
+import { AccountId } from "@polkadot/types/interfaces"
+import { XcmV1MultiAsset, XcmV1MultiLocation } from '@polkadot/types/lookup'
+
 import { BridgeChainId, DepositNonce, ResourceId } from '../interfaces'
 import { BridgeOutboundingRecord, BridgeInboundingRecord, Tx, XcmTransfered, XcmDeposited, XcmWithdrawn } from '../types'
 
@@ -151,7 +153,7 @@ export async function handleProposalFailedEvent(ctx: SubstrateEvent): Promise<vo
 export async function handleXcmTransferedEvent(ctx: SubstrateEvent): Promise<void> {
     const {
         data: [asset, origin, dest],
-    } = ctx.event as unknown as IEvent<[MultiAsset, MultiLocation, MultiLocation]>
+    } = ctx.event as unknown as IEvent<[XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiLocation]>
 
     let hash = ctx.extrinsic?.extrinsic.hash.toHex()
     let sender = origin.interior.asX1.asAccountId32.id.toString()
@@ -172,16 +174,17 @@ export async function handleXcmTransferedEvent(ctx: SubstrateEvent): Promise<voi
         record.sender = sender
         record.asset = asset.id.asConcrete.toString()
         record.recipient = recipient
-        record.amount = asset.fungibility.asFungible.toBigInt()
+        // We can safely unwrap here because currently only support fungible transfer
+        record.amount = asset.fun.asFungible.toBigInt()
         await record.save()
-        logger.info(`===> Add new XcmTransfered record: ${record}`)
+        logger.debug(`Add new XcmTransfered record: ${record}`)
     }
 }
 
 export async function handleXcmDepositedEvent(ctx: SubstrateEvent): Promise<void> {
     const {
         data: [what, who],
-    } = ctx.event as unknown as IEvent<[MultiAsset, MultiLocation]>
+    } = ctx.event as unknown as IEvent<[XcmV1MultiAsset, XcmV1MultiLocation]>
 
     let hash = ctx.extrinsic?.extrinsic.hash.toHex()
     let recipient
@@ -197,11 +200,6 @@ export async function handleXcmDepositedEvent(ctx: SubstrateEvent): Promise<void
         recipient = 'unknown'
     }
 
-    logger.info(`===> XcmDeposited:\n`)
-    logger.info(`what: ${what}\n`)
-    //@ts-ignore
-    logger.info(`amount: ${what.fun.fungible}\n`)
-
     const id = `${recipient}-${hash}`
     let record = await XcmDeposited.get(id)
     if (record === undefined) {
@@ -209,17 +207,18 @@ export async function handleXcmDepositedEvent(ctx: SubstrateEvent): Promise<void
         record.createdAt = ctx.block.timestamp
         record.asset = what.id.asConcrete.toString()
         record.recipient = recipient
-        record.amount = what.fungibility.asFungible.toBigInt()
+        // We can safely unwrap here because currently only support fungible transfer
+        record.amount = what.fun.asFungible.toBigInt()
         record.isForward = isForward
         await record.save()
-        logger.info(`===> Add new XcmDeposited record: ${record}`)
+        logger.debug(`Add new XcmDeposited record: ${record}`)
     }
 }
 
 export async function handleXcmWithdrawnEvent(ctx: SubstrateEvent): Promise<void> {
     const {
         data: [what, who],
-    } = ctx.event as unknown as IEvent<[MultiAsset, MultiLocation]>
+    } = ctx.event as unknown as IEvent<[XcmV1MultiAsset, XcmV1MultiLocation]>
 
     let hash = ctx.extrinsic?.extrinsic.hash.toHex()
     let depositer
@@ -237,8 +236,9 @@ export async function handleXcmWithdrawnEvent(ctx: SubstrateEvent): Promise<void
         record.createdAt = ctx.block.timestamp
         record.asset = what.id.asConcrete.toString()
         record.depositer = depositer
-        record.amount = what.fungibility.asFungible.toBigInt()
+        // We can safely unwrap here because currently only support fungible transfer
+        record.amount = what.fun.asFungible.toBigInt()
         await record.save()
-        logger.info(`===> Add new XcmWithdrawn record: ${record}`)
+        logger.debug(`Add new XcmWithdrawn record: ${record}`)
     }
 }
