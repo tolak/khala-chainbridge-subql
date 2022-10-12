@@ -1,84 +1,8 @@
-type SpecVersion @entity {
-    id: ID! #specVersion
-    blockHeight: BigInt!
-}
-
-type XcmTransfered @entity {
-    id: ID!
-    createdAt: Date!
-
-    asset: String! @index
-    sender: String! @index
-    recipient: String! @index
-    amount: BigInt
-}
-
-type XcmDeposited @entity {
-    id: ID!
-    createdAt: Date!
-
-    asset: String! @index
-    recipient: String! @index
-    amount: BigInt
-    isForward: Boolean
-}
-
-type XcmWithdrawn @entity {
-    id: ID!
-    createdAt: Date!
-
-    asset: String! @index
-    depositer: String! @index
-    amount: BigInt
-}
-
-type Tx @entity {
-    id: ID!
-    hash: String!
-    sender: String!
-}
-
-type BridgeOutboundingRecord @entity {
-    id: ID!
-    createdAt: Date!
-
-    # destChainId and depositNonce can be used to track
-    # crosschain transfer status on dest chain
-    destChainId: Int! @index
-    depositNonce: BigInt! @index
-
-    resourceId: String! @index
-    amount: BigInt
-    recipient: String @index
-
-    sendTx: String
-
-    # Sender can be used to construct user transaction history
-    sender: String @index
-}
-
-type BridgeInboundingRecord @entity {
-    id: ID!
-    createdAt: Date!
-
-    # Origin chain can use destChainId and depositNonce to track
-    # crosschain transfer status on this chain
-    originChainId: Int! @index
-    depositNonce: BigInt! @index
-
-    resourceId: String! @index
-    # Proposal status being updated when vote happened
-    status: String!
-
-    voteTxs: [String!]!
-    executeTx: String
-}
-
 type Treasury @entity {
     id: ID!
 
     blockHeight: BigInt! @index
-    # total treasury income
+    # Total treasury income
     amount: BigInt!
 }
 
@@ -86,15 +10,13 @@ type Mining @entity {
     id: ID!
 
     blockHeight: BigInt! @index
-    # total distributed mining rewards
+    # Total distributed mining rewards
     amount: BigInt!
 }
 
 type Circulation @entity {
     id: ID!
     blockHeight: BigInt! @index
-    # circulation on khala network
-    khala: BigInt!
-    # circulation on khala network and others
-    total: BigInt!
+    # Circulation of PAH on Phala/Khala/Ethereum
+    amount: BigInt!
 }
